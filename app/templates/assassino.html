@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block conteudo %}
+    <h1>Você é o Assassino!</h1>
+    <img src="{{ url_for('static', filename='assassino.png') }}" alt="Assassino">
+
+    <form id="acaoForm" method="post">
+        <label>Escolha quem eliminar:</label>
+        <select name="vitima">
+            {% for jogador in jogadores %}
+            <option value="{{ jogador }}">{{ jogador }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Confirmar</button>
+    </form>
+
+    <p>Tempo restante: <span id="timer">60</span> segundos</p>
+
+    <script src="{{ url_for('static', filename='timer.js') }}"></script>
+    <script>
+        startTimer(60, 'acaoForm', 'timer');
+    </script>
+{% endblock %}
