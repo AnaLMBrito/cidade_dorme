@@ -1,7 +1,9 @@
 {% extends "base.html" %}
 
-{% block title %}
-{% endblock %}
+{% block conteudo %}
+    <h1>Cidade Dorme</h1>
+    <p>Bem-vindo ao jogo!</p>
 
-{% block corpo %}
+    <a href="{{ url_for('login') }}"><button>Login</button></a>
+    <a href="{{ url_for('regras') }}"><button>Regras</button></a>
 {% endblock %}

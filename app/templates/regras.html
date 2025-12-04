@@ -1,7 +1,23 @@
 {% extends "base.html" %}
 
-{% block title %}
-{% endblock %}
+{% block conteudo %}
+<h1>Regras do Jogo</h1>
 
-{% block corpo %}
-{% endblock %} 
+<ul>
+    <li>O jogo termina quando sobra 1 sobrevivente ou quando o assassino é eliminado na votação.</li>
+    <li>Há três papéis: <strong>Assassino</strong>, <strong>Anjo</strong> e <strong>Cidadão</strong>.</li>
+    <li>Durante a noite:
+        <ul>
+            <li>O <strong>Assassino</strong> escolhe alguém para eliminar (1 minuto).</li>
+            <li>O <strong>Anjo</strong> escolhe alguém para salvar, após a ação do assassino (1 minuto).</li>
+            <li>Os <strong>Cidadãos</strong> apenas observam a mensagem "Cidade dorme".</li>
+        </ul>
+    </li>
+    <li>Após a noite, todos votam para eliminar um jogador.</li>
+    <li>O jogador só sabe seu próprio papel e deve agir conforme ele.</li>
+    <li>Se o Assassino for eliminado ou restar apenas 1 jogador, o jogo termina.</li>
+</ul>
+
+<br>
+<a href="{{ url_for('index') }}"><button>Voltar</button></a>
+{% endblock %}

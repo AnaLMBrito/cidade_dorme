@@ -77,7 +77,7 @@ def sorteio():
         elif papel == "anjo":
             return redirect(url_for("anjo"))
         else:
-            return redirect(url_for("cidadao"))
+            return redirect(url_for("cidade_noite"))
 
     return render_template("sorteio.html")
 

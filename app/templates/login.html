@@ -1,7 +1,24 @@
 {% extends "base.html" %}
 
-{% block title %}
-{% endblock %}
+{% block conteudo %}
+<h1>Login</h1>
 
-{% block corpo %}
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul style="color:red;">
+      {% for message in messages %}
+        <li>{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+
+<form method="post">
+    <label for="nome">Digite seu nome:</label>
+    <input type="text" name="nome" id="nome" required>
+    <button type="submit">Entrar</button>
+</form>
+
+<br>
+<a href="{{ url_for('index') }}"><button>Voltar</button></a>
 {% endblock %}

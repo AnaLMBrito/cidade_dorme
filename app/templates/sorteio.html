@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block conteudo %}
+<h1>Sorteio de Papéis</h1>
+<p>Pronto para descobrir seu papel no jogo?</p>
+
+<form method="post">
+    <button type="submit">Iniciar Partida</button>
+</form>
+
+<br>
+<a href="{{ url_for('index') }}"><button>Voltar</button></a>
+{% endblock %}
