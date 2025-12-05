@@ -1,2 +1,6 @@
-- [x] Adicionar rota /cidadao para renderizar cidadao.html com verificação de papel
-- [x] Modificar o POST da rota /sorteio para redirecionar condicionalmente baseado no papel (assassino -> /assassino, anjo -> /anjo, cidadao -> /cidadao)
+# TODO List for Citizen Random Selection Task
+
+- [x] Modify app.py to add random selection logic in the cidadao route
+- [x] Select one player to save and one to eliminate randomly
+- [x] Update the cidadao.html template if needed to display selections
+- [x] Test the changes to ensure random selections work correctly

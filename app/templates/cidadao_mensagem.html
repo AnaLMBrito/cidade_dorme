@@ -2,23 +2,13 @@
 
 {% block conteudo %}
 <h1>Você é o Cidadão!</h1>
-<img src="{{ url_for('static', filename='cidadao.png') }}" alt="Cidadão">
+<img src="{{ url_for('static', filename='img/images.jpg') }}" alt="Cidadão" class="image-animation">
 
 <p>Durma e sobreviva!</p>
 
 <p>Redirecionando em <span id="timer">5</span> segundos...</p>
 
 <script>
-    let timeLeft = 5;
-    const timerElement = document.getElementById('timer');
-
-    const countdown = setInterval(() => {
-        timeLeft--;
-        timerElement.textContent = timeLeft;
-        if (timeLeft <= 0) {
-            clearInterval(countdown);
-            window.location.href = "{{ url_for('cidadao_espera') }}";
-        }
-    }, 1000);
+    redirectTimer(5, 'timer', '{{ url_for('cidadao_espera') }}');
 </script>
 {% endblock %}

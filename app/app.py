@@ -1,74 +1,77 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from bd import gerar_jogadores_e_papeis
-#url_for - função que renderiza a página a 
-#partir do nome da função, independente do nome da rota
-#{{url_for('')}} 
-#session - permite guardar informações entre páginas
-#flash - envia mensagens rápidas para o usuário
-#Importa do arquivo bd.py a função que sorteia os jogadores
 
-#Cria o app Flask
-#secret_key - permite a utilização da sessão e flash
 app = Flask(__name__)
 app.secret_key = "senha123"
 
-#renderiza index (página incial) com botões para login e regras
+# Variáveis globais para gerenciar o estado do jogo
+estado_jogo = {
+    "vitima": None,
+    "salvo": None,
+    "votos": {},
+    "jogadores_vivos": [],
+    "papeis_globais": {},
+    "ultimo_eliminado": None,
+    "papel_eliminado": None
+}
+
 @app.route("/")
 def index():
     return render_template("index.html")
 
-#mostra/traz a página ddas regras do jogo ao ser clicado o botão de regras na página inicial
 @app.route("/regras")
 def regras():
     return render_template("regras.html")
 
-#GET - mostrar a página 
-#POST - receber formulário
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    #pega o nome digitado pelo usuário
     if request.method == "POST":
         nome = request.form.get("nome")
-        #se o campo nome estiver vazio ou não atender aos requisitos de validação (pelo menos 2 caracteres e pelo menos uma letra) retorna uma mensagem flash e recarrega para uma nova tentativa.
-        #o for vai percorrer cada caractere para ver se tem alguma letra.
         if not nome or len(nome) < 2 or not any(c.isalpha() for c in nome):
             flash("Erro. Digite um nome com pelo menos 2 caracteres e pelo menos uma letra.")
             return redirect(url_for("login"))
 
-        #salva o nome na sessão
         session["nome"] = nome
-        #vai para a página de sorteio de papeis
         return redirect(url_for("sorteio"))
     
-    #renderiza a página login
     return render_template("login.html")
-
 
 @app.route("/reset")
 def reset():
-    #limpa sessão e volta para a página inicial, "reiniciando" o site
+    global estado_jogo
     session.clear()
+    estado_jogo = {
+        "vitima": None,
+        "salvo": None,
+        "votos": {},
+        "jogadores_vivos": [],
+        "papeis_globais": {},
+        "ultimo_eliminado": None,
+        "papel_eliminado": None
+    }
     return redirect(url_for("index"))
 
-#a partir do botão iniciar partida, pega o sorteio e redireciona o usuario para seu respectivo papel
 @app.route("/sorteio", methods=["GET", "POST"])
 def sorteio():
-    #verifica se o usuario está logado em uma sessão (não digitou /sorteio na barra, por exemplo), se não estiver, é redirecionado para login.
+    global estado_jogo
+    
     if "nome" not in session:
         flash("É necessário login para jogar, faça seu login!")
         return redirect(url_for("login"))
 
-    #se o botão "Iniciar partida" for clicado
     if request.method == "POST":
-        #pega a lista de jogadores e os respectivos papeis através da função criada no bd.py
         jogadores, papeis = gerar_jogadores_e_papeis(session["nome"])
 
-        #guarda o nome dos jogadores na sessão do usuário, o que permite acessar a lista em outras páginas durante o jogo, sem precisar passar pela função novamente.
         session["jogadores"] = jogadores
-        #guarda na sessão também o papel do jogador usuário para ter a experiência personalizada de acordo com o seu papel
         session["papel"] = papeis[session["nome"]]
+        
+        # Inicializa o estado global do jogo
+        estado_jogo["jogadores_vivos"] = jogadores.copy()
+        estado_jogo["papeis_globais"] = papeis
+        estado_jogo["votos"] = {}
+        estado_jogo["ultimo_eliminado"] = None
+        estado_jogo["papel_eliminado"] = None
 
-        #redireciona para a página correspondente ao papel sorteado
         papel = session["papel"]
         if papel == "assassino":
             return redirect(url_for("assassino_mensagem"))
@@ -79,26 +82,26 @@ def sorteio():
 
     return render_template("sorteio.html")
 
-
 @app.route("/assassino_mensagem")
 def assassino_mensagem():
     if "papel" not in session or session["papel"] != "assassino":
         flash("Acesso negado!")
         return redirect(url_for("sorteio"))
-
     return render_template("assassino_mensagem.html")
 
 @app.route("/assassino", methods=["GET", "POST"])
 def assassino():
+    global estado_jogo
+    
     if "papel" not in session or session["papel"] != "assassino":
         flash("Acesso negado!")
         return redirect(url_for("sorteio"))
 
-    jogadores = [j for j in session.get("jogadores", []) if j != session["nome"]]
+    jogadores = [j for j in estado_jogo["jogadores_vivos"] if j != session["nome"]]
 
     if request.method == "POST":
         vitima = request.form.get("vitima")
-        session["vitima"] = vitima
+        estado_jogo["vitima"] = vitima
         return redirect(url_for("assassino_durma"))
 
     return render_template("assassino.html", jogadores=jogadores)
@@ -115,7 +118,6 @@ def anjo_mensagem():
     if "papel" not in session or session["papel"] != "anjo":
         flash("Acesso negado!")
         return redirect(url_for("sorteio"))
-
     return render_template("anjo_mensagem.html")
 
 @app.route("/anjo_espera")
@@ -123,21 +125,22 @@ def anjo_espera():
     if "papel" not in session or session["papel"] != "anjo":
         flash("Acesso negado!")
         return redirect(url_for("sorteio"))
-
     return render_template("anjo_espera.html")
 
 @app.route("/anjo", methods=["GET", "POST"])
 def anjo():
+    global estado_jogo
+    
     if "papel" not in session or session["papel"] != "anjo":
         flash("Acesso negado!")
         return redirect(url_for("sorteio"))
 
-    jogadores = session.get("jogadores", [])
+    jogadores = estado_jogo["jogadores_vivos"]
 
     if request.method == "POST":
         salvo = request.form.get("salvo")
-        session["salvo"] = salvo
-        return redirect(url_for("votacao"))
+        estado_jogo["salvo"] = salvo
+        return redirect(url_for("resultado_noite"))
 
     return render_template("anjo.html", jogadores=jogadores)
 
@@ -146,7 +149,6 @@ def cidadao_mensagem():
     if "papel" not in session or session["papel"] != "cidadao":
         flash("Acesso negado!")
         return redirect(url_for("sorteio"))
-
     return render_template("cidadao_mensagem.html")
 
 @app.route("/cidadao_espera")
@@ -154,36 +156,152 @@ def cidadao_espera():
     if "papel" not in session or session["papel"] != "cidadao":
         flash("Acesso negado!")
         return redirect(url_for("sorteio"))
-
     return render_template("cidadao_espera.html")
 
-@app.route("/cidadao")
-def cidadao():
-    if "papel" not in session or session["papel"] != "cidadao":
-        flash("Acesso negado!")
-        return redirect(url_for("sorteio"))
-
-    jogadores = session.get("jogadores", [])
-    return render_template("cidadao.html", jogadores=jogadores)
+@app.route("/resultado_noite")
+def resultado_noite():
+    global estado_jogo
+    
+    if "nome" not in session:
+        flash("É necessário login!")
+        return redirect(url_for("login"))
+    
+    vitima = estado_jogo.get("vitima")
+    salvo = estado_jogo.get("salvo")
+    morto = None
+    mensagem = ""
+    
+    # Verifica se alguém morreu
+    if vitima and vitima != salvo:
+        morto = vitima
+        if morto in estado_jogo["jogadores_vivos"]:
+            estado_jogo["jogadores_vivos"].remove(morto)
+        mensagem = f"O assassino atacou {vitima}!"
+    elif vitima and vitima == salvo:
+        mensagem = f"O anjo salvou {salvo}! Ninguém morreu."
+    else:
+        mensagem = "A noite passou tranquila."
+    
+    # Reseta as escolhas da noite
+    estado_jogo["vitima"] = None
+    estado_jogo["salvo"] = None
+    
+    return render_template("resultado.html", mensagem=mensagem, morto=morto)
 
 @app.route("/votacao", methods=["GET", "POST"])
 def votacao():
+    global estado_jogo
+    
     if "nome" not in session:
         flash("É necessário login para votar!")
         return redirect(url_for("login"))
+    
+    # Verifica se o jogador está vivo
+    if session["nome"] not in estado_jogo["jogadores_vivos"]:
+        flash("Você foi eliminado e não pode mais votar!")
+        return redirect(url_for("index"))
 
-    jogadores = session.get("jogadores", [])
+    jogadores = estado_jogo["jogadores_vivos"]
+    
     if request.method == "POST":
         voto = request.form.get("votacao")
-        session["voto"] = voto
-        return redirect(url_for("resultado"))
+        # Registra o voto
+        estado_jogo["votos"][session["nome"]] = voto
+        return redirect(url_for("aguardando_votacao"))
 
     return render_template("votacao.html", jogadores=jogadores)
 
-@app.route("/resultado")
-def resultado():
-    return render_template("resultado.html")
+@app.route("/aguardando_votacao")
+def aguardando_votacao():
+    if "nome" not in session:
+        flash("É necessário login!")
+        return redirect(url_for("login"))
+    
+    return render_template("aguardando_votacao.html")
 
-#para rodar o site
+@app.route("/resultado_votacao")
+def resultado_votacao():
+    global estado_jogo
+    
+    if "nome" not in session:
+        flash("É necessário login!")
+        return redirect(url_for("login"))
+    
+    # Conta os votos
+    contagem = {}
+    for votante, votado in estado_jogo["votos"].items():
+        if votado in contagem:
+            contagem[votado] += 1
+        else:
+            contagem[votado] = 1
+    
+    # Encontra quem recebeu mais votos
+    if contagem:
+        eliminado = max(contagem, key=contagem.get)
+        votos_recebidos = contagem[eliminado]
+        
+        if eliminado in estado_jogo["jogadores_vivos"]:
+            estado_jogo["jogadores_vivos"].remove(eliminado)
+        
+        # Verifica se o eliminado era o assassino
+        papel_eliminado = estado_jogo["papeis_globais"].get(eliminado)
+        
+        # Guarda informações do eliminado
+        estado_jogo["ultimo_eliminado"] = eliminado
+        estado_jogo["papel_eliminado"] = papel_eliminado
+        
+        # Limpa os votos para a próxima rodada
+        estado_jogo["votos"] = {}
+        
+        # Mostra o resultado da votação
+        return render_template("resultado_votacao.html", 
+                             eliminado=eliminado, 
+                             papel=papel_eliminado,
+                             votos=votos_recebidos)
+    
+    # Se não houver votos, continua o jogo
+    return render_template("resultado_votacao.html", eliminado=None, papel=None, votos=0)
+
+@app.route("/verificar_vitoria")
+def verificar_vitoria():
+    global estado_jogo
+    
+    if "nome" not in session:
+        flash("É necessário login!")
+        return redirect(url_for("login"))
+    
+    papel_eliminado = estado_jogo.get("papel_eliminado")
+    
+    # Verifica condições de vitória
+    if papel_eliminado == "assassino":
+        return redirect(url_for("fim_cidade"))
+    
+    # Conta quantos cidadãos (incluindo anjo) restam
+    vivos_nao_assassinos = sum(1 for j in estado_jogo["jogadores_vivos"] 
+                               if estado_jogo["papeis_globais"].get(j) != "assassino")
+    
+    if vivos_nao_assassinos <= 1:
+        return redirect(url_for("fim_assassino"))
+    
+    # Continua o jogo - volta para a noite
+    if session["papel"] == "assassino" and session["nome"] in estado_jogo["jogadores_vivos"]:
+        return redirect(url_for("assassino"))
+    elif session["papel"] == "anjo" and session["nome"] in estado_jogo["jogadores_vivos"]:
+        return redirect(url_for("anjo_espera"))
+    elif session["papel"] == "cidadao" and session["nome"] in estado_jogo["jogadores_vivos"]:
+        return redirect(url_for("cidadao_espera"))
+    else:
+        # Jogador foi eliminado
+        flash("Você foi eliminado!")
+        return redirect(url_for("index"))
+
+@app.route("/fim_cidade")
+def fim_cidade():
+    return render_template("fim_cidade.html")
+
+@app.route("/fim_assassino")
+def fim_assassino():
+    return render_template("fim_assassino.html")
+
 if __name__=='__main__':
     app.run(debug=True)

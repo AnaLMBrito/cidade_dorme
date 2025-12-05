@@ -1,18 +1,40 @@
-function startTimer(duration, formId, displayId, redirectUrl) {
-    let time = duration;
-    let display = document.getElementById(displayId);
-    let form = formId ? document.getElementById(formId) : null;
+// Função para timer com submissão automática de formulário
+function startTimer(seconds, formId, timerId, redirectUrl = null) {
+    let timeLeft = seconds;
+    const timerElement = document.getElementById(timerId);
+    const form = formId ? document.getElementById(formId) : null;
 
-    let countdown = setInterval(() => {
-        display.textContent = time;
-        time--;
-        if (time < 0) {
+    const countdown = setInterval(() => {
+        timeLeft--;
+        if (timerElement) {
+            timerElement.textContent = timeLeft;
+        }
+        
+        if (timeLeft <= 0) {
             clearInterval(countdown);
             if (form) {
-                form.submit();  // só envia se existir form
+                form.submit();
             } else if (redirectUrl) {
-                window.location.href = redirectUrl;  // redireciona se não houver form
+                window.location.href = redirectUrl;
             }
+        }
+    }, 1000);
+}
+
+// Função para timer com redirecionamento simples
+function redirectTimer(seconds, timerId, redirectUrl) {
+    let timeLeft = seconds;
+    const timerElement = document.getElementById(timerId);
+
+    const countdown = setInterval(() => {
+        timeLeft--;
+        if (timerElement) {
+            timerElement.textContent = timeLeft;
+        }
+        
+        if (timeLeft <= 0) {
+            clearInterval(countdown);
+            window.location.href = redirectUrl;
         }
     }, 1000);
 }

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block conteudo %}
+<h1>Resultado da Votação</h1>
+
+{% if eliminado %}
+    <p><strong>{{ eliminado }}</strong> foi eliminado com {{ votos }} voto(s)!</p>
+    
+    {% if papel == "assassino" %}
+        <p style="color: red; font-weight: bold;">🔪 O eliminado era o ASSASSINO! 🔪</p>
+    {% elif papel == "anjo" %}
+        <p style="color: blue; font-weight: bold;">😇 O eliminado era o ANJO! 😇</p>
+    {% else %}
+        <p style="color: gray;">👤 O eliminado era um CIDADÃO.</p>
+    {% endif %}
+{% else %}
+    <p>Nenhum jogador foi eliminado nesta rodada.</p>
+{% endif %}
+
+<br>
+
+<p>Verificando condições de vitória...</p>
+<p>Redirecionando em <span id="timer">5</span> segundos...</p>
+
+<script>
+    let timeLeft = 5;
+    const timerElement = document.getElementById('timer');
+
+    const countdown = setInterval(() => {
+        timeLeft--;
+        timerElement.textContent = timeLeft;
+        if (timeLeft <= 0) {
+            clearInterval(countdown);
+            window.location.href = "{{ url_for('verificar_vitoria') }}";
+        }
+    }, 1000);
+</script>
+{% endblock %}

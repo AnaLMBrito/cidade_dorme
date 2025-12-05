@@ -1,10 +1,11 @@
 {% extends "base.html" %}
 
 {% block conteudo %}
-<h1>Você é o Assassino!</h1>
+<h1>Aguardando Contagem dos Votos...</h1>
+
+<p>Todos os jogadores estão votando. Aguarde o resultado.</p>
 
 <p>Redirecionando em <span id="timer">5</span> segundos...</p>
-<img src="{{ url_for('static', filename='img/Amigos fora.jpg') }}" alt="Assassino" class="image-animation">
 
 <script>
     let timeLeft = 5;
@@ -15,7 +16,7 @@
         timerElement.textContent = timeLeft;
         if (timeLeft <= 0) {
             clearInterval(countdown);
-            window.location.href = "{{ url_for('assassino') }}";
+            window.location.href = "{{ url_for('resultado_votacao') }}";
         }
     }, 1000);
 </script>

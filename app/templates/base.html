@@ -3,11 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="js/js.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="{{ url_for('static', filename='js/js.js') }}"></script>
     <title>Cidade dorme</title>
 </head>
 <body>
+  <header class="site-header">
+    <a class="brand" href="{{ url_for('index') }}"> 🌙 Cidade dorme </a>
+  </header>
+  <main>
     {% block conteudo %}
     {% endblock %}
+  </main>
 </body>
 </html>

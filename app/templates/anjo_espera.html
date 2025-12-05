@@ -2,23 +2,13 @@
 
 {% block conteudo %}
 <h1>Anjo, aguarde!</h1>
-<img src="{{ url_for('static', filename='anjo.png') }}" alt="Anjo">
+<img src="{{ url_for('static', filename='medico.jpg') }}" alt="Anjo">
 
 <p>Aguarde enquanto o assassino escolhe uma vítima.</p>
 
 <p>Tempo restante: <span id="timer">60</span> segundos</p>
 
 <script>
-    let timeLeft = 60;
-    const timerElement = document.getElementById('timer');
-
-    const countdown = setInterval(() => {
-        timeLeft--;
-        timerElement.textContent = timeLeft;
-        if (timeLeft <= 0) {
-            clearInterval(countdown);
-            window.location.href = "{{ url_for('anjo') }}";
-        }
-    }, 1000);
+    redirectTimer(60, 'timer', '{{ url_for('anjo') }}');
 </script>
 {% endblock %}

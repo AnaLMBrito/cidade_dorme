@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block conteudo %}
+<h1>Você é um Cidadão!</h1>
+<img src="{{ url_for('static', filename='img/images.jpg') }}" alt="Cidadão" class="image-animation">
+
+<p>Sua missão é sobreviver e descobrir quem é o assassino!</p>
+
+<p>Aguarde a fase de votação...</p>
+
+<a href="{{ url_for('votacao') }}"><button>Ir para Votação</button></a>
+{% endblock %}

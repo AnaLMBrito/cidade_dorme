@@ -2,14 +2,14 @@
 
 {% block conteudo %}
 <h1>Cidadão, durma!</h1>
-<img src="{{ url_for('static', filename='cidadao.png') }}" alt="Cidadão">
+<img src="{{ url_for('static', filename='img/images.jpg') }}" alt="Cidadão" class="image-animation">
 
 <p>Aguarde enquanto o assassino e o anjo fazem suas escolhas.</p>
 
-<p>Tempo restante: <span id="timer">120</span> segundos</p>
+<p>Tempo restante: <span id="timer">60</span> segundos</p>
 
 <script>
-    let timeLeft = 120;
+    let timeLeft = 60;
     const timerElement = document.getElementById('timer');
 
     const countdown = setInterval(() => {
