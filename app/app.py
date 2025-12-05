@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from bd import gerar_jogadores_e_papeis
+import random
 
 app = Flask(__name__)
 app.secret_key = "senha123"
@@ -12,8 +13,37 @@ estado_jogo = {
     "jogadores_vivos": [],
     "papeis_globais": {},
     "ultimo_eliminado": None,
-    "papel_eliminado": None
+    "papel_eliminado": None,
+    "assassino_nome": None,
+    "anjo_nome": None
 }
+
+def bot_assassino_escolhe_vitima():
+    """Bot assassino escolhe uma vítima aleatória"""
+    global estado_jogo
+    assassino = estado_jogo.get("assassino_nome")
+    
+    # Lista de jogadores vivos exceto o assassino
+    possiveis_vitimas = [j for j in estado_jogo["jogadores_vivos"] if j != assassino]
+    
+    if possiveis_vitimas:
+        vitima = random.choice(possiveis_vitimas)
+        estado_jogo["vitima"] = vitima
+        return vitima
+    return None
+
+def bot_anjo_escolhe_salvo():
+    """Bot anjo escolhe alguém aleatório para salvar"""
+    global estado_jogo
+    
+    # Anjo pode escolher qualquer jogador vivo (incluindo ele mesmo)
+    jogadores_vivos = estado_jogo["jogadores_vivos"]
+    
+    if jogadores_vivos:
+        salvo = random.choice(jogadores_vivos)
+        estado_jogo["salvo"] = salvo
+        return salvo
+    return None
 
 @app.route("/")
 def index():
@@ -47,7 +77,9 @@ def reset():
         "jogadores_vivos": [],
         "papeis_globais": {},
         "ultimo_eliminado": None,
-        "papel_eliminado": None
+        "papel_eliminado": None,
+        "assassino_nome": None,
+        "anjo_nome": None
     }
     return redirect(url_for("index"))
 
@@ -71,6 +103,13 @@ def sorteio():
         estado_jogo["votos"] = {}
         estado_jogo["ultimo_eliminado"] = None
         estado_jogo["papel_eliminado"] = None
+        
+        # Identifica quem é o assassino e quem é o anjo
+        for jogador, papel in papeis.items():
+            if papel == "assassino":
+                estado_jogo["assassino_nome"] = jogador
+            elif papel == "anjo":
+                estado_jogo["anjo_nome"] = jogador
 
         papel = session["papel"]
         if papel == "assassino":
@@ -122,9 +161,17 @@ def anjo_mensagem():
 
 @app.route("/anjo_espera")
 def anjo_espera():
+    global estado_jogo
+    
     if "papel" not in session or session["papel"] != "anjo":
         flash("Acesso negado!")
         return redirect(url_for("sorteio"))
+    
+    # Se o assassino for um bot e ainda não escolheu, faz a escolha automaticamente
+    assassino = estado_jogo.get("assassino_nome")
+    if assassino and assassino.startswith("Bot") and not estado_jogo.get("vitima"):
+        bot_assassino_escolhe_vitima()
+    
     return render_template("anjo_espera.html")
 
 @app.route("/anjo", methods=["GET", "POST"])
@@ -153,9 +200,22 @@ def cidadao_mensagem():
 
 @app.route("/cidadao_espera")
 def cidadao_espera():
+    global estado_jogo
+    
     if "papel" not in session or session["papel"] != "cidadao":
         flash("Acesso negado!")
         return redirect(url_for("sorteio"))
+    
+    # Se o assassino for um bot e ainda não escolheu, faz a escolha automaticamente
+    assassino = estado_jogo.get("assassino_nome")
+    if assassino and assassino.startswith("Bot") and not estado_jogo.get("vitima"):
+        bot_assassino_escolhe_vitima()
+    
+    # Se o anjo for um bot e ainda não escolheu, faz a escolha automaticamente
+    anjo = estado_jogo.get("anjo_nome")
+    if anjo and anjo.startswith("Bot") and not estado_jogo.get("salvo"):
+        bot_anjo_escolhe_salvo()
+    
     return render_template("cidadao_espera.html")
 
 @app.route("/resultado_noite")
@@ -165,6 +225,16 @@ def resultado_noite():
     if "nome" not in session:
         flash("É necessário login!")
         return redirect(url_for("login"))
+    
+    # Se o assassino for um bot e ainda não escolheu, faz a escolha automaticamente
+    assassino = estado_jogo.get("assassino_nome")
+    if assassino and assassino.startswith("Bot") and not estado_jogo.get("vitima"):
+        bot_assassino_escolhe_vitima()
+    
+    # Se o anjo for um bot e ainda não escolheu, faz a escolha automaticamente
+    anjo = estado_jogo.get("anjo_nome")
+    if anjo and anjo.startswith("Bot") and not estado_jogo.get("salvo"):
+        bot_anjo_escolhe_salvo()
     
     vitima = estado_jogo.get("vitima")
     salvo = estado_jogo.get("salvo")
@@ -207,6 +277,15 @@ def votacao():
         voto = request.form.get("votacao")
         # Registra o voto
         estado_jogo["votos"][session["nome"]] = voto
+        
+        # Bots votam automaticamente
+        for jogador in estado_jogo["jogadores_vivos"]:
+            if jogador.startswith("Bot") and jogador not in estado_jogo["votos"]:
+                # Bot vota em alguém aleatório (exceto ele mesmo)
+                possiveis_votos = [j for j in estado_jogo["jogadores_vivos"] if j != jogador]
+                if possiveis_votos:
+                    estado_jogo["votos"][jogador] = random.choice(possiveis_votos)
+        
         return redirect(url_for("aguardando_votacao"))
 
     return render_template("votacao.html", jogadores=jogadores)

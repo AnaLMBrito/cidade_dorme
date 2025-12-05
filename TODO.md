@@ -1,6 +1,7 @@
-# TODO List for Citizen Random Selection Task
+# TODO: Comment Files in Detail
 
-- [x] Modify app.py to add random selection logic in the cidadao route
-- [x] Select one player to save and one to eliminate randomly
-- [x] Update the cidadao.html template if needed to display selections
-- [x] Test the changes to ensure random selections work correctly
+- [ ] Comment every line in app/app.py with detailed explanations
+- [ ] Comment every line in app/bd.py with detailed explanations (enhance existing comments)
+- [ ] Comment every line in all HTML files in app/templates/
+- [ ] Comment every line in app/static/css/style.css
+- [ ] Comment every line in app/static/js/js.js
