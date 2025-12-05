@@ -1,0 +1,2 @@
+- [x] Adicionar rota /cidadao para renderizar cidadao.html com verificação de papel
+- [x] Modificar o POST da rota /sorteio para redirecionar condicionalmente baseado no papel (assassino -> /assassino, anjo -> /anjo, cidadao -> /cidadao)

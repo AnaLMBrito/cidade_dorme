@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block conteudo %}
+<h1>Você é o Anjo!</h1>
+<img src="{{ url_for('static', filename='anjo.png') }}" alt="Anjo">
+
+<p>Salve o máximo de pessoas possível!</p>
+
+<p>Redirecionando em <span id="timer">5</span> segundos...</p>
+
+<script>
+    let timeLeft = 5;
+    const timerElement = document.getElementById('timer');
+
+    const countdown = setInterval(() => {
+        timeLeft--;
+        timerElement.textContent = timeLeft;
+        if (timeLeft <= 0) {
+            clearInterval(countdown);
+            window.location.href = "{{ url_for('anjo_espera') }}";
+        }
+    }, 1000);
+</script>
+{% endblock %}

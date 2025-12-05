@@ -1,16 +1,18 @@
-// Função para criar contagem regressiva de 1 minuto (60 segundos)
-function startTimer(duration, formId, displayId) {
+function startTimer(duration, formId, displayId, redirectUrl) {
     let time = duration;
     let display = document.getElementById(displayId);
-    let form = document.getElementById(formId);
+    let form = formId ? document.getElementById(formId) : null;
 
     let countdown = setInterval(() => {
         display.textContent = time;
         time--;
         if (time < 0) {
             clearInterval(countdown);
-            // envia o formulário automaticamente quando o tempo acabar
-            form.submit();
+            if (form) {
+                form.submit();  // só envia se existir form
+            } else if (redirectUrl) {
+                window.location.href = redirectUrl;  // redireciona se não houver form
+            }
         }
     }, 1000);
 }

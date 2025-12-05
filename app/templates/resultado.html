@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block conteudo %}
+<h1>Resultado da Noite</h1>
+
+<p>{{ mensagem }}</p>
+
+{% if morto %}
+    <p><strong>Morreu:</strong> {{ morto }}</p>
+{% else %}
+    <p>Ninguém morreu nesta rodada.</p>
+{% endif %}
+
+<br>
+
+<a href="{{ url_for('votacao') }}">Ir para a votação</a>
+
+{% endblock %}

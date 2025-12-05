@@ -68,19 +68,25 @@ def sorteio():
         #guarda na sessão também o papel do jogador usuário para ter a experiência personalizada de acordo com o seu papel
         session["papel"] = papeis[session["nome"]]
 
-        #variável com o papel do usuário
+        #redireciona para a página correspondente ao papel sorteado
         papel = session["papel"]
-
-        #validação e redirecionamento para respectiva página do papel do usuário
         if papel == "assassino":
-            return redirect(url_for("assassino"))
+            return redirect(url_for("assassino_mensagem"))
         elif papel == "anjo":
-            return redirect(url_for("anjo"))
-        else:
-            return redirect(url_for("cidade_noite"))
+            return redirect(url_for("anjo_mensagem"))
+        elif papel == "cidadao":
+            return redirect(url_for("cidadao_mensagem"))
 
     return render_template("sorteio.html")
 
+
+@app.route("/assassino_mensagem")
+def assassino_mensagem():
+    if "papel" not in session or session["papel"] != "assassino":
+        flash("Acesso negado!")
+        return redirect(url_for("sorteio"))
+
+    return render_template("assassino_mensagem.html")
 
 @app.route("/assassino", methods=["GET", "POST"])
 def assassino():
@@ -104,6 +110,22 @@ def assassino_durma():
         return redirect(url_for("sorteio"))
     return render_template("assassino_durma.html")
 
+@app.route("/anjo_mensagem")
+def anjo_mensagem():
+    if "papel" not in session or session["papel"] != "anjo":
+        flash("Acesso negado!")
+        return redirect(url_for("sorteio"))
+
+    return render_template("anjo_mensagem.html")
+
+@app.route("/anjo_espera")
+def anjo_espera():
+    if "papel" not in session or session["papel"] != "anjo":
+        flash("Acesso negado!")
+        return redirect(url_for("sorteio"))
+
+    return render_template("anjo_espera.html")
+
 @app.route("/anjo", methods=["GET", "POST"])
 def anjo():
     if "papel" not in session or session["papel"] != "anjo":
@@ -115,20 +137,53 @@ def anjo():
     if request.method == "POST":
         salvo = request.form.get("salvo")
         session["salvo"] = salvo
-        return redirect(url_for("cidade_noite"))
+        return redirect(url_for("votacao"))
 
     return render_template("anjo.html", jogadores=jogadores)
 
-@app.route("/cidade_noite")
-def cidadao_noite():
-    if "papel" not in session:
+@app.route("/cidadao_mensagem")
+def cidadao_mensagem():
+    if "papel" not in session or session["papel"] != "cidadao":
+        flash("Acesso negado!")
+        return redirect(url_for("sorteio"))
+
+    return render_template("cidadao_mensagem.html")
+
+@app.route("/cidadao_espera")
+def cidadao_espera():
+    if "papel" not in session or session["papel"] != "cidadao":
+        flash("Acesso negado!")
+        return redirect(url_for("sorteio"))
+
+    return render_template("cidadao_espera.html")
+
+@app.route("/cidadao")
+def cidadao():
+    if "papel" not in session or session["papel"] != "cidadao":
         flash("Acesso negado!")
         return redirect(url_for("sorteio"))
 
     jogadores = session.get("jogadores", [])
-    return render_template("cidade_noite.html", jogadores=jogadores)
+    return render_template("cidadao.html", jogadores=jogadores)
 
-    
+@app.route("/votacao", methods=["GET", "POST"])
+def votacao():
+    if "nome" not in session:
+        flash("É necessário login para votar!")
+        return redirect(url_for("login"))
+
+    jogadores = session.get("jogadores", [])
+    if request.method == "POST":
+        voto = request.form.get("votacao")
+        session["voto"] = voto
+        return redirect(url_for("resultado"))
+
+    return render_template("votacao.html", jogadores=jogadores)
+
+@app.route("/resultado")
+def resultado():
+    return render_template("resultado.html")
+
 #para rodar o site
 if __name__=='__main__':
     app.run(debug=True)
