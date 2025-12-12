@@ -5,15 +5,12 @@
 
 <p>Um jogo de mistério e dedução onde você precisa descobrir quem é o assassino antes que seja tarde demais!</p>
 <img src="{{ url_for('static', filename='img/inicio.jpg') }}" alt="Imagem de início">
+
 <div style="margin: 20px 0;">
     <a href="{{ url_for('login') }}"><button>Entrar no Jogo</button></a>
 </div>
 
 <div style="margin: 20px 0;">
     <a href="{{ url_for('regras') }}"><button>Ver Regras</button></a>
-</div>
-
-<div style="margin: 20px 0;">
-    <a href="{{ url_for('reset') }}"><button>Reiniciar Jogo</button></a>
 </div>
 {% endblock %}

@@ -141,6 +141,12 @@ def assassino():
     if request.method == "POST":
         vitima = request.form.get("vitima")
         estado_jogo["vitima"] = vitima
+        
+        # Bot anjo escolhe alguém para salvar
+        anjo = estado_jogo.get("anjo_nome")
+        if anjo and anjo.startswith("Bot") and anjo in estado_jogo["jogadores_vivos"]:
+            bot_anjo_escolhe_salvo()
+        
         return redirect(url_for("assassino_durma"))
 
     return render_template("assassino.html", jogadores=jogadores)
@@ -167,10 +173,11 @@ def anjo_espera():
         flash("Acesso negado!")
         return redirect(url_for("sorteio"))
     
-    # Se o assassino for um bot e ainda não escolheu, faz a escolha automaticamente
+    # Bot assassino escolhe uma vítima
     assassino = estado_jogo.get("assassino_nome")
-    if assassino and assassino.startswith("Bot") and not estado_jogo.get("vitima"):
-        bot_assassino_escolhe_vitima()
+    if assassino and assassino.startswith("Bot") and assassino in estado_jogo["jogadores_vivos"]:
+        if not estado_jogo.get("vitima"):
+            bot_assassino_escolhe_vitima()
     
     return render_template("anjo_espera.html")
 
@@ -206,15 +213,17 @@ def cidadao_espera():
         flash("Acesso negado!")
         return redirect(url_for("sorteio"))
     
-    # Se o assassino for um bot e ainda não escolheu, faz a escolha automaticamente
+    # Bot assassino escolhe uma vítima
     assassino = estado_jogo.get("assassino_nome")
-    if assassino and assassino.startswith("Bot") and not estado_jogo.get("vitima"):
-        bot_assassino_escolhe_vitima()
+    if assassino and assassino.startswith("Bot") and assassino in estado_jogo["jogadores_vivos"]:
+        if not estado_jogo.get("vitima"):
+            bot_assassino_escolhe_vitima()
     
-    # Se o anjo for um bot e ainda não escolheu, faz a escolha automaticamente
+    # Bot anjo escolhe alguém para salvar
     anjo = estado_jogo.get("anjo_nome")
-    if anjo and anjo.startswith("Bot") and not estado_jogo.get("salvo"):
-        bot_anjo_escolhe_salvo()
+    if anjo and anjo.startswith("Bot") and anjo in estado_jogo["jogadores_vivos"]:
+        if not estado_jogo.get("salvo"):
+            bot_anjo_escolhe_salvo()
     
     return render_template("cidadao_espera.html")
 
@@ -226,15 +235,17 @@ def resultado_noite():
         flash("É necessário login!")
         return redirect(url_for("login"))
     
-    # Se o assassino for um bot e ainda não escolheu, faz a escolha automaticamente
+    # Garante que bot assassino escolheu se necessário
     assassino = estado_jogo.get("assassino_nome")
-    if assassino and assassino.startswith("Bot") and not estado_jogo.get("vitima"):
-        bot_assassino_escolhe_vitima()
+    if assassino and assassino.startswith("Bot") and assassino in estado_jogo["jogadores_vivos"]:
+        if not estado_jogo.get("vitima"):
+            bot_assassino_escolhe_vitima()
     
-    # Se o anjo for um bot e ainda não escolheu, faz a escolha automaticamente
+    # Garante que bot anjo escolheu se necessário
     anjo = estado_jogo.get("anjo_nome")
-    if anjo and anjo.startswith("Bot") and not estado_jogo.get("salvo"):
-        bot_anjo_escolhe_salvo()
+    if anjo and anjo.startswith("Bot") and anjo in estado_jogo["jogadores_vivos"]:
+        if not estado_jogo.get("salvo"):
+            bot_anjo_escolhe_salvo()
     
     vitima = estado_jogo.get("vitima")
     salvo = estado_jogo.get("salvo")
@@ -275,14 +286,25 @@ def votacao():
     
     if request.method == "POST":
         voto = request.form.get("votacao")
-        # Registra o voto
+        
+        # Validação: assassino não pode votar nele mesmo
+        if session["papel"] == "assassino" and voto == session["nome"]:
+            flash("Você não pode votar em si mesmo!")
+            return redirect(url_for("votacao"))
+        
+        # Registra o voto do usuário
         estado_jogo["votos"][session["nome"]] = voto
         
         # Bots votam automaticamente
         for jogador in estado_jogo["jogadores_vivos"]:
             if jogador.startswith("Bot") and jogador not in estado_jogo["votos"]:
-                # Bot vota em alguém aleatório (exceto ele mesmo)
+                # Cria lista de possíveis votos (exceto o próprio bot)
                 possiveis_votos = [j for j in estado_jogo["jogadores_vivos"] if j != jogador]
+                
+                # Se o bot for o assassino, não pode votar nele mesmo
+                if estado_jogo["papeis_globais"].get(jogador) == "assassino":
+                    possiveis_votos = [j for j in possiveis_votos if j != jogador]
+                
                 if possiveis_votos:
                     estado_jogo["votos"][jogador] = random.choice(possiveis_votos)
         
@@ -351,7 +373,7 @@ def verificar_vitoria():
     
     papel_eliminado = estado_jogo.get("papel_eliminado")
     
-    # Verifica condições de vitória
+    # Verifica se o assassino foi eliminado
     if papel_eliminado == "assassino":
         return redirect(url_for("fim_cidade"))
     
@@ -359,20 +381,23 @@ def verificar_vitoria():
     vivos_nao_assassinos = sum(1 for j in estado_jogo["jogadores_vivos"] 
                                if estado_jogo["papeis_globais"].get(j) != "assassino")
     
+    # Se sobrar só o assassino e mais um, assassino vence
     if vivos_nao_assassinos <= 1:
         return redirect(url_for("fim_assassino"))
     
     # Continua o jogo - volta para a noite
-    if session["papel"] == "assassino" and session["nome"] in estado_jogo["jogadores_vivos"]:
-        return redirect(url_for("assassino"))
-    elif session["papel"] == "anjo" and session["nome"] in estado_jogo["jogadores_vivos"]:
-        return redirect(url_for("anjo_espera"))
-    elif session["papel"] == "cidadao" and session["nome"] in estado_jogo["jogadores_vivos"]:
-        return redirect(url_for("cidadao_espera"))
-    else:
+    if session["nome"] not in estado_jogo["jogadores_vivos"]:
         # Jogador foi eliminado
         flash("Você foi eliminado!")
         return redirect(url_for("index"))
+    
+    # Jogador continua vivo, volta para seu papel
+    if session["papel"] == "assassino":
+        return redirect(url_for("assassino"))
+    elif session["papel"] == "anjo":
+        return redirect(url_for("anjo_espera"))
+    elif session["papel"] == "cidadao":
+        return redirect(url_for("cidadao_espera"))
 
 @app.route("/fim_cidade")
 def fim_cidade():

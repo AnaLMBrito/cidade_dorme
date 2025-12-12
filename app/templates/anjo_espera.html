@@ -2,13 +2,13 @@
 
 {% block conteudo %}
 <h1>Anjo, aguarde!</h1>
-<img src="{{ url_for('static', filename='medico.jpg') }}" alt="Anjo">
+<img src="{{ url_for('static', filename='img/medico.jpg') }}" alt="Anjo">
 
 <p>Aguarde enquanto o assassino escolhe uma vítima.</p>
 
 <p>Tempo restante: <span id="timer">60</span> segundos</p>
 
 <script>
-    redirectTimer(60, 'timer', '{{ url_for('anjo') }}');
+    redirectTimer(60, 'timer', '{{ url_for("anjo") }}');
 </script>
 {% endblock %}

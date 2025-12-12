@@ -9,6 +9,6 @@
 
     <script src="{{ url_for('static', filename='js/js.js') }}"></script>
     <script>
-        startTimer(60, null, 'timer', '{{ url_for("votacao") }}');
+        redirectTimer(60, 'timer', '{{ url_for("resultado_noite") }}');
     </script>
 {% endblock %}
