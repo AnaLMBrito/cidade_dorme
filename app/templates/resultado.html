@@ -13,6 +13,25 @@
 
 <br>
 
-<a href="{{ url_for('votacao') }}">Ir para a votação</a>
+{% if usuario_morreu %}
+    <p style="color: red; font-weight: bold;">💀 Você foi eliminado! 💀</p>
+    <p>Redirecionando em <span id="timer">3</span> segundos...</p>
+    
+    <script>
+        let timeLeft = 3;
+        const timerElement = document.getElementById('timer');
+
+        const countdown = setInterval(() => {
+            timeLeft--;
+            timerElement.textContent = timeLeft;
+            if (timeLeft <= 0) {
+                clearInterval(countdown);
+                window.location.href = "{{ url_for('game_over') }}";
+            }
+        }, 1000);
+    </script>
+{% else %}
+    <a href="{{ url_for('votacao') }}"><button>Ir para a votação</button></a>
+{% endif %}
 
 {% endblock %}

@@ -19,20 +19,40 @@
 
 <br>
 
-<p>Verificando condições de vitória...</p>
-<p>Redirecionando em <span id="timer">5</span> segundos...</p>
+{% if usuario_eliminado %}
+    <p style="color: red; font-weight: bold;">💀 Você foi eliminado pela votação! 💀</p>
+    <p>Redirecionando em <span id="timer">3</span> segundos...</p>
+    
+    <script>
+        let timeLeft = 3;
+        const timerElement = document.getElementById('timer');
 
-<script>
-    let timeLeft = 5;
-    const timerElement = document.getElementById('timer');
+        const countdown = setInterval(() => {
+            timeLeft--;
+            timerElement.textContent = timeLeft;
+            if (timeLeft <= 0) {
+                clearInterval(countdown);
+                window.location.href = "{{ url_for('game_over') }}";
+            }
+        }, 1000);
+    </script>
+{% else %}
+    <p>Verificando condições de vitória...</p>
+    <p>Redirecionando em <span id="timer">5</span> segundos...</p>
 
-    const countdown = setInterval(() => {
-        timeLeft--;
-        timerElement.textContent = timeLeft;
-        if (timeLeft <= 0) {
-            clearInterval(countdown);
-            window.location.href = "{{ url_for('verificar_vitoria') }}";
-        }
-    }, 1000);
-</script>
+    <script>
+        let timeLeft = 5;
+        const timerElement = document.getElementById('timer');
+
+        const countdown = setInterval(() => {
+            timeLeft--;
+            timerElement.textContent = timeLeft;
+            if (timeLeft <= 0) {
+                clearInterval(countdown);
+                window.location.href = "{{ url_for('verificar_vitoria') }}";
+            }
+        }, 1000);
+    </script>
+{% endif %}
+
 {% endblock %}

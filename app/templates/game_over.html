@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block conteudo %}
+<h1>💀 Game Over!</h1>
+<img src="{{ url_for('static', filename='img/images.jpg') }}" alt="Game Over" class="image-animation">
+
+<h2>Você morreu!</h2>
+<p>Infelizmente você foi eliminado do jogo.</p>
+
+<div style="margin-top: 30px;">
+    <a href="{{ url_for('reset') }}"><button>Voltar ao Início</button></a>
+</div>
+{% endblock %}

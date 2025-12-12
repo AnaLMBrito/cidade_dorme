@@ -136,6 +136,10 @@ def assassino():
         flash("Acesso negado!")
         return redirect(url_for("sorteio"))
 
+    # Verifica se o assassino ainda está vivo
+    if session["nome"] not in estado_jogo["jogadores_vivos"]:
+        return redirect(url_for("game_over"))
+
     jogadores = [j for j in estado_jogo["jogadores_vivos"] if j != session["nome"]]
 
     if request.method == "POST":
@@ -156,6 +160,11 @@ def assassino_durma():
     if "papel" not in session or session["papel"] != "assassino":
         flash("Acesso negado!")
         return redirect(url_for("sorteio"))
+    
+    # Verifica se o assassino ainda está vivo
+    if session["nome"] not in estado_jogo["jogadores_vivos"]:
+        return redirect(url_for("game_over"))
+    
     return render_template("assassino_durma.html")
 
 @app.route("/anjo_mensagem")
@@ -173,6 +182,10 @@ def anjo_espera():
         flash("Acesso negado!")
         return redirect(url_for("sorteio"))
     
+    # Verifica se o anjo ainda está vivo
+    if session["nome"] not in estado_jogo["jogadores_vivos"]:
+        return redirect(url_for("game_over"))
+    
     # Bot assassino escolhe uma vítima
     assassino = estado_jogo.get("assassino_nome")
     if assassino and assassino.startswith("Bot") and assassino in estado_jogo["jogadores_vivos"]:
@@ -188,6 +201,10 @@ def anjo():
     if "papel" not in session or session["papel"] != "anjo":
         flash("Acesso negado!")
         return redirect(url_for("sorteio"))
+
+    # Verifica se o anjo ainda está vivo
+    if session["nome"] not in estado_jogo["jogadores_vivos"]:
+        return redirect(url_for("game_over"))
 
     jogadores = estado_jogo["jogadores_vivos"]
 
@@ -212,6 +229,10 @@ def cidadao_espera():
     if "papel" not in session or session["papel"] != "cidadao":
         flash("Acesso negado!")
         return redirect(url_for("sorteio"))
+    
+    # Verifica se o cidadão ainda está vivo
+    if session["nome"] not in estado_jogo["jogadores_vivos"]:
+        return redirect(url_for("game_over"))
     
     # Bot assassino escolhe uma vítima
     assassino = estado_jogo.get("assassino_nome")
@@ -251,6 +272,7 @@ def resultado_noite():
     salvo = estado_jogo.get("salvo")
     morto = None
     mensagem = ""
+    usuario_morreu = False
     
     # Verifica se alguém morreu
     if vitima and vitima != salvo:
@@ -258,6 +280,11 @@ def resultado_noite():
         if morto in estado_jogo["jogadores_vivos"]:
             estado_jogo["jogadores_vivos"].remove(morto)
         mensagem = f"O assassino atacou {vitima}!"
+        
+        # Verifica se o usuário morreu
+        if morto == session["nome"]:
+            usuario_morreu = True
+            
     elif vitima and vitima == salvo:
         mensagem = f"O anjo salvou {salvo}! Ninguém morreu."
     else:
@@ -267,7 +294,7 @@ def resultado_noite():
     estado_jogo["vitima"] = None
     estado_jogo["salvo"] = None
     
-    return render_template("resultado.html", mensagem=mensagem, morto=morto)
+    return render_template("resultado.html", mensagem=mensagem, morto=morto, usuario_morreu=usuario_morreu)
 
 @app.route("/votacao", methods=["GET", "POST"])
 def votacao():
@@ -279,8 +306,7 @@ def votacao():
     
     # Verifica se o jogador está vivo
     if session["nome"] not in estado_jogo["jogadores_vivos"]:
-        flash("Você foi eliminado e não pode mais votar!")
-        return redirect(url_for("index"))
+        return redirect(url_for("game_over"))
 
     jogadores = estado_jogo["jogadores_vivos"]
     
@@ -318,6 +344,10 @@ def aguardando_votacao():
         flash("É necessário login!")
         return redirect(url_for("login"))
     
+    # Verifica se o jogador ainda está vivo
+    if session["nome"] not in estado_jogo["jogadores_vivos"]:
+        return redirect(url_for("game_over"))
+    
     return render_template("aguardando_votacao.html")
 
 @app.route("/resultado_votacao")
@@ -336,6 +366,8 @@ def resultado_votacao():
         else:
             contagem[votado] = 1
     
+    usuario_eliminado = False
+    
     # Encontra quem recebeu mais votos
     if contagem:
         eliminado = max(contagem, key=contagem.get)
@@ -343,6 +375,10 @@ def resultado_votacao():
         
         if eliminado in estado_jogo["jogadores_vivos"]:
             estado_jogo["jogadores_vivos"].remove(eliminado)
+        
+        # Verifica se o usuário foi eliminado
+        if eliminado == session["nome"]:
+            usuario_eliminado = True
         
         # Verifica se o eliminado era o assassino
         papel_eliminado = estado_jogo["papeis_globais"].get(eliminado)
@@ -358,10 +394,11 @@ def resultado_votacao():
         return render_template("resultado_votacao.html", 
                              eliminado=eliminado, 
                              papel=papel_eliminado,
-                             votos=votos_recebidos)
+                             votos=votos_recebidos,
+                             usuario_eliminado=usuario_eliminado)
     
     # Se não houver votos, continua o jogo
-    return render_template("resultado_votacao.html", eliminado=None, papel=None, votos=0)
+    return render_template("resultado_votacao.html", eliminado=None, papel=None, votos=0, usuario_eliminado=False)
 
 @app.route("/verificar_vitoria")
 def verificar_vitoria():
@@ -370,6 +407,10 @@ def verificar_vitoria():
     if "nome" not in session:
         flash("É necessário login!")
         return redirect(url_for("login"))
+    
+    # Verifica se o usuário foi eliminado
+    if session["nome"] not in estado_jogo["jogadores_vivos"]:
+        return redirect(url_for("game_over"))
     
     papel_eliminado = estado_jogo.get("papel_eliminado")
     
@@ -386,11 +427,6 @@ def verificar_vitoria():
         return redirect(url_for("fim_assassino"))
     
     # Continua o jogo - volta para a noite
-    if session["nome"] not in estado_jogo["jogadores_vivos"]:
-        # Jogador foi eliminado
-        flash("Você foi eliminado!")
-        return redirect(url_for("index"))
-    
     # Jogador continua vivo, volta para seu papel
     if session["papel"] == "assassino":
         return redirect(url_for("assassino"))
@@ -398,6 +434,12 @@ def verificar_vitoria():
         return redirect(url_for("anjo_espera"))
     elif session["papel"] == "cidadao":
         return redirect(url_for("cidadao_espera"))
+
+@app.route("/game_over")
+def game_over():
+    if "nome" not in session:
+        return redirect(url_for("index"))
+    return render_template("game_over.html")
 
 @app.route("/fim_cidade")
 def fim_cidade():
